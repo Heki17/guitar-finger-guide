@@ -1,0 +1,13 @@
+{
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/api/songsterr/(.*)",
+      "destination": "/api/songsterr/[...path]?path=$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
