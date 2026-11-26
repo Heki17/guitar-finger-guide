@@ -16,6 +16,10 @@ export interface FingeredNote {
   fromScore: boolean;
   /** タイで伸ばしている音(押さえ続ける) */
   sustained: boolean;
+  /** デッドノート(ブラッシング)かどうか */
+  isDead?: boolean;
+  /** パームミュート(右手ブリッジミュート)かどうか */
+  isPalmMute?: boolean;
 }
 
 export interface Barre {
@@ -31,6 +35,10 @@ export interface Fingering {
   /** 人差し指が担当するフレット(ポジション) */
   position: number;
   stringCount: number;
+  /** パームミュート(右手ブリッジミュート)が含まれるか */
+  hasPalmMute?: boolean;
+  /** 全弦ブラッシング(デッドノート)か */
+  isAllDead?: boolean;
 }
 
 const MAX_FRET = 24;
@@ -64,12 +72,30 @@ function toStringIndex(note: Note, stringCount: number): number {
 export function fingerBeat(beat: Beat, p: number, stringCount: number): Fingering {
   const all = playableNotes(beat);
   const result: FingeredNote[] = [];
+  const hasPalmMute = beat.notes.some((n) => n.isPalmMute);
+  const isAllDead = all.length > 0 && all.every((n) => n.isDead);
 
   for (const n of all) {
     if (n.isDead) {
-      result.push({ stringIndex: toStringIndex(n, stringCount), fret: n.fret, finger: -1, fromScore: false, sustained: false });
+      result.push({
+        stringIndex: toStringIndex(n, stringCount),
+        fret: n.fret,
+        finger: -1,
+        fromScore: false,
+        sustained: false,
+        isDead: true,
+        isPalmMute: n.isPalmMute,
+      });
     } else if (n.fret === 0) {
-      result.push({ stringIndex: toStringIndex(n, stringCount), fret: 0, finger: 0, fromScore: false, sustained: n.isTieDestination });
+      result.push({
+        stringIndex: toStringIndex(n, stringCount),
+        fret: 0,
+        finger: 0,
+        fromScore: false,
+        sustained: n.isTieDestination,
+        isDead: false,
+        isPalmMute: n.isPalmMute,
+      });
     }
   }
 
@@ -123,6 +149,8 @@ export function fingerBeat(beat: Beat, p: number, stringCount: number): Fingerin
         finger: (fromScore ? scoreFinger : assigned.get(n)!) as Finger,
         fromScore,
         sustained: n.isTieDestination,
+        isDead: false,
+        isPalmMute: n.isPalmMute,
       });
     }
   }
@@ -138,12 +166,14 @@ export function fingerBeat(beat: Beat, p: number, stringCount: number): Fingerin
           finger: -1,
           fromScore: false,
           sustained: false,
+          isDead: false,
+          isPalmMute: false,
         });
       }
     }
   }
 
-  return { notes: result, barre, position: p, stringCount };
+  return { notes: result, barre, position: p, stringCount, hasPalmMute, isAllDead };
 }
 
 /** ある拍で取りうるポジション候補(人差し指のフレット) */

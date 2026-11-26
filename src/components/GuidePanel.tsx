@@ -10,17 +10,19 @@ import {
   type Fingering,
 } from '../guide/fingering';
 import { chordName } from '../guide/chord';
+import { analyzeMuteGuide } from '../guide/muteGuide';
 import { Fretboard, FINGER_COLORS, FINGER_NAMES } from './Fretboard';
 
 interface Props {
   track: alphaTab.model.Track | null;
   playedBeat: alphaTab.model.Beat | null;
   showNext: boolean;
+  showMuteGuide?: boolean;
 }
 
 const TICKS_PER_QUARTER = 960;
 
-export function GuidePanel({ track, playedBeat, showNext }: Props) {
+export function GuidePanel({ track, playedBeat, showNext, showMuteGuide = true }: Props) {
   // トラック全体の運指は読み込み/切り替え時に一度だけ計算
   const fingeringMap = useMemo(() => (track ? computeTrackFingering(track) : new Map<number, Fingering>()), [track]);
 
@@ -48,6 +50,9 @@ export function GuidePanel({ track, playedBeat, showNext }: Props) {
     beat && nextBeat ? Math.max(0, (absoluteTick(nextBeat) - absoluteTick(beat)) / TICKS_PER_QUARTER) : null;
 
   const usedFingers: number[] = [...new Set(current?.notes.map((n) => n.finger as number).filter((f) => f > 0) ?? [])];
+
+  // ミュートガイド情報の解析
+  const muteInfo = useMemo(() => analyzeMuteGuide(current, beat, tuning), [current, beat, tuning]);
 
   return (
     <div className="guide">
@@ -86,9 +91,44 @@ export function GuidePanel({ track, playedBeat, showNext }: Props) {
           </span>
         </div>
       </div>
+
       <div className="guide-board">
-        <Fretboard current={current} next={next} showNext={showNext} tuning={tuning} />
+        <Fretboard current={current} next={next} showNext={showNext} tuning={tuning} muteInfo={muteInfo} />
       </div>
+
+      {showMuteGuide && (
+        <div className="mute-guide-panel">
+          <div className="mute-guide-header">
+            <span className="mute-guide-title">🔇 ミュート指示</span>
+            {muteInfo.isPalmMute && <span className="badge-pm">右手 P.M.</span>}
+            {muteInfo.isAllDead && <span className="badge-brushing">ブラッシング</span>}
+          </div>
+          <div className="mute-guide-content">
+            {muteInfo.stringAdvices.length > 0 ? (
+              <ul className="mute-advices-list">
+                {muteInfo.stringAdvices.map((adv) => (
+                  <li key={adv.stringIndex} className="mute-advice-item">
+                    <span className="mute-string-badge">{adv.stringNumber}弦</span>
+                    <span className="mute-method-tag">{adv.badge}</span>
+                    <span className="mute-advice-text">{adv.shortAdvice}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : muteInfo.isPalmMute ? (
+              <div className="mute-general-advice">
+                右手の手のひらの端（小指球）をブリッジサドル付近に乗せてピッキングします。
+              </div>
+            ) : (
+              <div className="mute-none-advice">
+                🟢 発音弦のみです。不要な共鳴が出ないよう綺麗に鳴らしましょう。
+              </div>
+            )}
+          </div>
+          <div className="mute-guide-summary" title={muteInfo.summary}>
+            {muteInfo.summary}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

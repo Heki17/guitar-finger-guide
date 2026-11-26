@@ -1,4 +1,5 @@
 import type { Fingering, FingeredNote } from '../guide/fingering';
+import type { MuteGuideInfo } from '../guide/muteGuide';
 
 export const FINGER_COLORS: Record<number, string> = {
   1: '#3b82f6', // 人差し指
@@ -17,6 +18,8 @@ interface Props {
   showNext: boolean;
   /** MIDI 値(0 = 最高音弦) */
   tuning: number[];
+  /** ミュートガイド詳細情報 */
+  muteInfo?: MuteGuideInfo;
 }
 
 const TOP = 26;
@@ -32,7 +35,7 @@ const NUT_X = HEAD_X + HEAD_W; // ナット(上駒)のX座標 (102)
 const NUT_W = 8; // ナットの厚み
 const FRET_START_X = NUT_X + NUT_W; // 1フレット以降の指板開始X座標 (110)
 
-export function Fretboard({ current, next, showNext, tuning }: Props) {
+export function Fretboard({ current, next, showNext, tuning, muteInfo }: Props) {
   const stringCount = tuning.length || 6;
 
   // 表示するフレット範囲(現在と次の押弦がすべて収まるように)
@@ -61,8 +64,20 @@ export function Fretboard({ current, next, showNext, tuning }: Props) {
 
     // ミュート (×)
     if (n.finger === -1) {
+      const advice = kind === 'current' ? muteInfo?.stringAdvices.find((a) => a.stringIndex === n.stringIndex) : null;
+      const badgeText = advice
+        ? advice.method === 'thumb'
+          ? '親指'
+          : advice.method === 'pad'
+          ? '腹'
+          : advice.method === 'tip'
+          ? '指先'
+          : ''
+        : '';
+
       return (
         <g key={key} className={isNext ? 'is-next' : 'is-current'}>
+          <title>{advice?.detailAdvice ?? 'この弦は弾かない(消音)'}</title>
           <circle
             cx={x}
             cy={y}
@@ -83,6 +98,31 @@ export function Fretboard({ current, next, showNext, tuning }: Props) {
           >
             ✕
           </text>
+          {!isNext && badgeText && (
+            <g className="mute-hint-pill">
+              <rect
+                x={x - 14}
+                y={y - DOT_R - 11}
+                width={28}
+                height={12}
+                rx={3}
+                fill="#991b1b"
+                stroke="#f87171"
+                strokeWidth={0.8}
+              />
+              <text
+                x={x}
+                y={y - DOT_R - 2.5}
+                textAnchor="middle"
+                fill="#ffffff"
+                fontSize={9}
+                fontWeight={700}
+                pointerEvents="none"
+              >
+                {badgeText}
+              </text>
+            </g>
+          )}
         </g>
       );
     }
@@ -238,10 +278,13 @@ export function Fretboard({ current, next, showNext, tuning }: Props) {
       {/* 弦(ヘッドから指板の端まで一気に貫く) */}
       {Array.from({ length: stringCount }, (_, s) => {
         const y = yOf(s);
+        const isMuted =
+          !!current?.notes.some((n) => n.stringIndex === s && n.finger === -1) &&
+          !current?.notes.some((n) => n.stringIndex === s && n.finger >= 0);
         const thickness = 1.2 + (s / Math.max(1, stringCount - 1)) * 2.2;
-        const stringColor = s < 3 ? '#e2e8f0' : '#cbd5e1';
+        const stringColor = isMuted ? '#991b1b' : s < 3 ? '#e2e8f0' : '#cbd5e1';
         return (
-          <g key={`s${s}`}>
+          <g key={`s${s}`} className={isMuted ? 'is-muted-string' : ''}>
             <line
               x1={HEAD_X}
               x2={FRET_START_X + boardWidth}
@@ -249,6 +292,8 @@ export function Fretboard({ current, next, showNext, tuning }: Props) {
               y2={y}
               stroke={stringColor}
               strokeWidth={thickness}
+              strokeDasharray={isMuted ? '6 4' : undefined}
+              opacity={isMuted ? 0.65 : 1}
             />
             {/* 弦の影 */}
             <line
@@ -262,7 +307,7 @@ export function Fretboard({ current, next, showNext, tuning }: Props) {
             />
             {/* 弦ラベル (1 E, 2 B 等) */}
             <text x={HEAD_X - 12} y={y + 4} textAnchor="end" className="string-label">
-              {s + 1} <tspan fill="#64748b">{NOTE_NAMES[(tuning[s] ?? 0) % 12]}</tspan>
+              {s + 1} <tspan fill={isMuted ? '#f87171' : '#64748b'}>{NOTE_NAMES[(tuning[s] ?? 0) % 12]}</tspan>
             </text>
           </g>
         );
@@ -313,6 +358,26 @@ export function Fretboard({ current, next, showNext, tuning }: Props) {
       )}
       {/* 現在の押さえ方: ノート */}
       {current?.notes.map((n, i) => renderNote(n, 'current', `cur-${i}`))}
+
+      {/* パームミュート (P.M.) インジケータ */}
+      {muteInfo?.isPalmMute && (
+        <g className="pm-badge" transform={`translate(${Math.max(FRET_START_X + 20, FRET_START_X + boardWidth - 120)}, 4)`}>
+          <rect x={0} y={0} width={120} height={18} rx={9} fill="#78350f" stroke="#f59e0b" strokeWidth={1.2} />
+          <text x={60} y={13} textAnchor="middle" fill="#fef3c7" fontSize={10} fontWeight={800} pointerEvents="none">
+            🖐️ P.M. 右手ミュート
+          </text>
+        </g>
+      )}
+
+      {/* ブラッシング (全弦Dead) インジケータ */}
+      {muteInfo?.isAllDead && (
+        <g className="dead-badge" transform={`translate(${Math.max(FRET_START_X + 20, FRET_START_X + boardWidth - 130)}, 4)`}>
+          <rect x={0} y={0} width={130} height={18} rx={9} fill="#7f1d1d" stroke="#ef4444" strokeWidth={1.2} />
+          <text x={65} y={13} textAnchor="middle" fill="#ffffff" fontSize={10} fontWeight={800} pointerEvents="none">
+            ⚡ ブラッシング (全弦)
+          </text>
+        </g>
+      )}
     </svg>
   );
 }

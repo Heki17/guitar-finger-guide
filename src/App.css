@@ -120,6 +120,115 @@ button:disabled { opacity: 0.4; cursor: default; }
 .fretboard .finger-num { fill: #fff; font-size: 14px; font-weight: 800; pointer-events: none; }
 .fretboard .finger-num-next { font-size: 11px; font-weight: 700; opacity: 0.85; pointer-events: none; }
 .fretboard .is-next { opacity: 0.8; }
+.fretboard .is-muted-string line { transition: stroke 0.15s ease; }
+
+/* ---------- mute guide panel ---------- */
+.mute-guide-panel {
+  width: 250px;
+  flex-shrink: 0;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+.mute-guide-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+.mute-guide-title {
+  font-weight: 700;
+  color: #f87171;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.badge-pm {
+  background: #78350f;
+  color: #fde68a;
+  border: 1px solid #d97706;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.badge-brushing {
+  background: #7f1d1d;
+  color: #fecaca;
+  border: 1px solid #ef4444;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.mute-guide-content {
+  flex: 1;
+  max-height: 100px;
+  overflow-y: auto;
+}
+.mute-advices-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.mute-advice-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+.mute-string-badge {
+  font-weight: 700;
+  color: #ef4444;
+  font-family: monospace;
+  font-size: 11px;
+}
+.mute-method-tag {
+  background: #991b1b;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 0 4px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.mute-advice-text {
+  color: #cbd5e1;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mute-general-advice,
+.mute-none-advice {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.4;
+  padding: 4px 2px;
+}
+.mute-none-advice {
+  color: #86efac;
+}
+.mute-guide-summary {
+  font-size: 10.5px;
+  color: var(--muted);
+  border-top: 1px dashed var(--border);
+  padding-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* ---------- Songsterr UI & Modal ---------- */
 .songsterr-btn {

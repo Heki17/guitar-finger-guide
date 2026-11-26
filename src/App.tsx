@@ -21,6 +21,7 @@ export default function App() {
   const [looping, setLooping] = useState(false);
   const [tabOnly, setTabOnly] = useState(false);
   const [showNext, setShowNext] = useState(true);
+  const [showMuteGuide, setShowMuteGuide] = useState(true);
   const [mixes, setMixes] = useState<TrackMix[]>([]);
   const [dragOver, setDragOver] = useState(false);
 
@@ -183,6 +184,10 @@ export default function App() {
             <input type="checkbox" checked={showNext} onChange={(e) => setShowNext(e.target.checked)} />
             次の指を表示
           </label>
+          <label className="toggle-check">
+            <input type="checkbox" checked={showMuteGuide} onChange={(e) => setShowMuteGuide(e.target.checked)} />
+            🔇 ミュートガイド
+          </label>
           <button
             className="songsterr-btn"
             onClick={() => setSongsterrOpen(true)}
@@ -253,7 +258,7 @@ export default function App() {
 
       {/* ---------- 指ガイド(画面下に固定) ---------- */}
       <footer className="guide-dock">
-        <GuidePanel track={track} playedBeat={at.playedBeat} showNext={showNext} />
+        <GuidePanel track={track} playedBeat={at.playedBeat} showNext={showNext} showMuteGuide={showMuteGuide} />
       </footer>
     </div>
   );
