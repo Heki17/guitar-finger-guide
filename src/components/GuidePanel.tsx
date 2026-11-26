@@ -52,7 +52,7 @@ export function GuidePanel({ track, playedBeat, showNext, showMuteGuide = true }
   const usedFingers: number[] = [...new Set(current?.notes.map((n) => n.finger as number).filter((f) => f > 0) ?? [])];
 
   // ミュートガイド情報の解析
-  const muteInfo = useMemo(() => analyzeMuteGuide(current, beat, tuning), [current, beat, tuning]);
+  const muteInfo = analyzeMuteGuide(current, beat, tuning);
 
   return (
     <div className="guide">
